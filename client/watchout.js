@@ -7,11 +7,18 @@
 
 var enemyData = [];
 var playerData = [{x: 200, y: 200, r: 10}];
+var currentScore = 0;
 var score = 0;
 
 for (i = 0; i < 15; i++) {
-  enemyData.push({x: Math.random() * 400, y: Math.random() * 400});
+  enemyData.push({x: Math.random() * 400, y: Math.random() * 400, r: 10});
 }
+
+setInterval(function() {
+  d3.select('.current')
+  .text('Current Score: ' + currentScore);
+  currentScore++;
+}, 10);
 
 
 /*
@@ -28,7 +35,7 @@ function move () {
       .delay(1000)
       .duration(1500)
       .attr('cx', function(item) { return Math.random() * 400; })
-      .attr('cy', function(item) { return Math.random() * 400; })
+    //  .attr('cy', function(item) { return Math.random() * 400; })
     // .call(collide)
       .each('end', repeat);
   })();
@@ -76,41 +83,41 @@ d3.select('.board svg').selectAll('circle')
     .attr('fill', 'black')
     .classed('enemy', true)
   .transition()
-    .each(move);
+    .each(move)
+    .tween('custom', function(t) {
+      // var node = this;
+      return function checkCollision(t) {
+        // console.log('node',node);
+        // console.log('this',this);
+        var radiusSum = parseFloat(this.r.animVal.value) + playerData[0].r;
+        var xDiff = parseFloat(this.cx.animVal.value) - playerData[0].x;
+        var yDiff = parseFloat(this.cy.animVal.value) - playerData[0].y;
+
+        var separation = Math.sqrt( Math.pow(xDiff, 2) + Math.pow(yDiff, 2) );
+        if (separation < radiusSum) {
+          console.log('it worked!');
+        }
+      };  
+    });
+
 
 //Create player
 d3.select('.board svg').selectAll('player')
   .data(playerData)
   .enter()
     .append('circle')
-    .attr('r', function(item) {return item.r})
+    .attr('r', function(item) { return item.r; })
     .attr('cx', 200)
     .attr('cy', 200)
     .attr('fill', 'orange')
     .classed('player', true)
-    .call(drag)
-    .call(checkCollision);
+    .call(drag);
 
 /*
 ================================================
 ===============Collision Detection==============
 ================================================
 */
-
-function checkCollision(enemy, collidedCallback) {
-  var radiusSum = parseFloat(enemy.attr('r')) + playerData.r;
-  var xDiff = parseFloat(enemy.attr('cx')) - playerData.x;
-  var yDiff = parseFloat(enemy.attr('cy')) - playerData.y;
-
-  var separation = Math.sqrt( Math.pow(xDiff, 2) + Math.pow(yDiff, 2) );
-  if (separation < radiusSum) {
-    collidedCallback(player, enemy); 
-  }
-}
-
-function collidedCallback(player, enemy) {
-  console.log('collision detected');
-}
 
 
 
