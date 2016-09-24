@@ -11,6 +11,7 @@ var currentScore = 0;
 var highScore = 0;
 var score = 0;
 var collisionCount = 0;
+var canCollide = true;
 
 for (i = 0; i < 15; i++) {
   enemyData.push({x: Math.random() * 400, y: Math.random() * 400, r: 10});
@@ -36,9 +37,10 @@ function move () {
       .delay(1000)
       .duration(1500)
       .attr('cx', function(item) { return Math.random() * 400; })
-    //  .attr('cy', function(item) { return Math.random() * 400; })
-    // .call(collide)
+      .attr('cy', function(item) { return Math.random() * 400; })
       .each('end', repeat);
+    circle.classed('onCollide', false);
+    canCollide = true;
   })();
 };
 var drag = d3.behavior.drag()
@@ -103,7 +105,6 @@ d3.select('.board svg').selectAll('circle')
               .text('High Score: ' + highScore);
           }
           currentScore = 0;
-          collisionCount++;
           d3.select('.collisions')
               .text('Collisions: ' + collisionCount);
           console.log('it worked!');
@@ -132,30 +133,42 @@ d3.select('.board svg').selectAll('player')
 */
 
 setInterval (function() {
-  enemyData.forEach(function(enemy) {
-    console.log(enemy.x);
-    var radiusSum = parseFloat(enemy.r) + playerData[0].r;
-    var xDiff = parseFloat(enemy.x) - playerData[0].x;
-    var yDiff = parseFloat(enemy.y) - playerData[0].y;
-    // console.log(radiusSum, xDiff, yDiff);
+  d3.selectAll('.enemy')
+    .each (function(enemy) {
+      // console.log(enemy.x);
+      var thisEnemy = d3.select(this);
+      var radiusSum = parseFloat(thisEnemy.attr('r')) + playerData[0].r;
+      var xDiff = parseFloat(thisEnemy.attr('cx')) - playerData[0].x;
+      var yDiff = parseFloat(thisEnemy.attr('cy')) - playerData[0].y;
+      // console.log(radiusSum, xDiff, yDiff);
 
-    var separation = Math.sqrt( Math.pow(xDiff, 2) + Math.pow(yDiff, 2) );
-    if (separation < radiusSum) {
-      if (currentScore > highScore) {
-        highScore = currentScore;
-        d3.select('.highscore')
-          .text('High Score: ' + highScore);
+      var separation = Math.sqrt( Math.pow(xDiff, 2) + Math.pow(yDiff, 2) );
+      if (separation < radiusSum) {
+        if (currentScore > highScore) {
+          highScore = currentScore;
+          d3.select('.highscore')
+            .text('High Score: ' + highScore);
+        }
+        currentScore = 0;
+        
+        //Only trigger a collision at most once every second. canCollide is reset
+        //  in the transition function
+        if (canCollide) {
+          collisionCount++;
+          canCollide = false;
+          d3.select(this)
+            .classed('onCollide', true);
+          }
+          
+
+        d3.select('.collisions')
+            .text('Collisions: ' + collisionCount);
+        console.log('it worked!');
+      // if(enemy.cx ) {
+
+      // }
       }
-      currentScore = 0;
-      collisionCount++;
-      d3.select('.collisions')
-          .text('Collisions: ' + collisionCount);
-      console.log('it worked!');
-    // if(enemy.cx ) {
-
-    // }
-    }
-  });
+    });
 }, 10);
 
 
